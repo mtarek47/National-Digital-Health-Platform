@@ -1,0 +1,285 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  ShieldCheck, 
+  Stethoscope, 
+  FileCode2, 
+  History, 
+  UserPlus, 
+  Sparkles 
+} from 'lucide-react';
+import { api } from './api';
+import type { DigitalHealthCard, MedicalTimelineItem, Hospital, ConsentRecord, AccessLog } from './types';
+import { HealthCardView } from './components/HealthCardView';
+import { DoctorWorkstation } from './components/DoctorWorkstation';
+import { FhirViewer } from './components/FhirViewer';
+import { RegisterPatientModal } from './components/RegisterPatientModal';
+
+export const App: React.FC = () => {
+  const [activePortal, setActivePortal] = useState<'patient' | 'doctor' | 'fhir' | 'audit'>('patient');
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [currentCard, setCurrentCard] = useState<DigitalHealthCard | null>(null);
+  const [timeline, setTimeline] = useState<MedicalTimelineItem[]>([]);
+  const [consents, setConsents] = useState<ConsentRecord[]>([]);
+  const [audits, setAudits] = useState<AccessLog[]>([]);
+  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+
+  // Initial load
+  const loadInitialData = async () => {
+    try {
+      const hosps = await api.getHospitals();
+      setHospitals(hosps);
+      setBackendOnline(true);
+
+      // Load synthetic demo patient (Rahim Uddin)
+      const demoCard = await api.getCardByHealthId('HID-2026-884219');
+      setCurrentCard(demoCard);
+
+      if (demoCard) {
+        refreshPatientData(demoCard.patientId);
+      }
+    } catch (e) {
+      console.error('Backend connection check failed:', e);
+      setBackendOnline(false);
+    }
+  };
+
+  const refreshPatientData = async (patientId: string) => {
+    try {
+      const [tl, cs, au] = await Promise.all([
+        api.getTimeline(patientId),
+        api.getPatientConsents(patientId),
+        api.getPatientAudits(patientId)
+      ]);
+      setTimeline(tl);
+      setConsents(cs);
+      setAudits(au);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const handleGrantConsent = async (durationHours: number) => {
+    if (!currentCard) return;
+    try {
+      await api.grantConsent({
+        patientId: currentCard.patientId,
+        durationHours,
+        purpose: 'Outpatient consultation and emergency care'
+      });
+      refreshPatientData(currentCard.patientId);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handlePatientLoaded = (card: DigitalHealthCard) => {
+    setCurrentCard(card);
+    refreshPatientData(card.patientId);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      {/* Top National Header */}
+      <header className="bg-slate-900 text-white border-b border-emerald-500/30 shadow-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center font-bold text-white shadow-sm border border-red-400 text-xs">
+              BD
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-bold tracking-wide text-white">NATIONAL DIGITAL HEALTH PLATFORM</h1>
+                <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
+                  FHIR R4 PROTOTYPE
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">Directorate General of Health Services (DGHS) • Bangladesh</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {backendOnline ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-700">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Spring Boot 3 Live (Port 8080)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-950 text-red-400 border border-red-700">
+                <span className="w-2 h-2 rounded-full bg-red-500" /> Connecting to Backend...
+              </span>
+            )}
+
+            <button
+              onClick={() => setShowRegisterModal(true)}
+              className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl transition shadow-xs"
+            >
+              <UserPlus className="w-3.5 h-3.5" /> Issue New Card
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Demo Scenario Explainer Banner */}
+      <section className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-emerald-100 py-3 px-4 border-b border-emerald-800">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 font-medium">
+            <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>
+              <strong>Hackathon Flow:</strong> Rahim Uddin treated at <em>Hospital A (DMCH)</em> ➜ Visits <em>Hospital B (CMCH)</em> ➜ Doctor B verifies consent & encounters <strong>Duplicate Test Prevention Alert (HbA1c)</strong> ➜ Encounters converted to <strong>HL7 FHIR R4</strong>!
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-300">Active Patient:</span>
+            <span className="font-bold text-white bg-white/10 px-2 py-0.5 rounded font-mono">
+              {currentCard?.fullName || 'Loading...'} ({currentCard?.healthId})
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Navigation Tabs */}
+      <nav className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2">
+          <button
+            onClick={() => setActivePortal('patient')}
+            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 ${
+              activePortal === 'patient'
+                ? 'border-emerald-600 text-emerald-700'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" /> Patient Portal & Health Card
+          </button>
+          <button
+            onClick={() => setActivePortal('doctor')}
+            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 ${
+              activePortal === 'doctor'
+                ? 'border-emerald-600 text-emerald-700'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Stethoscope className="w-4 h-4" /> Doctor Consultation & Decision Support
+          </button>
+          <button
+            onClick={() => setActivePortal('fhir')}
+            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 ${
+              activePortal === 'fhir'
+                ? 'border-emerald-600 text-emerald-700'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <FileCode2 className="w-4 h-4" /> HL7 FHIR R4 Inspector
+          </button>
+          <button
+            onClick={() => setActivePortal('audit')}
+            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 ${
+              activePortal === 'audit'
+                ? 'border-emerald-600 text-emerald-700'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <History className="w-4 h-4" /> Central Audit Ledger
+          </button>
+        </div>
+      </nav>
+
+      {/* Main Content Area */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        {activePortal === 'patient' && (
+          <HealthCardView
+            card={currentCard}
+            timeline={timeline}
+            consents={consents}
+            audits={audits}
+            onOpenRegisterModal={() => setShowRegisterModal(true)}
+            onGrantConsent={handleGrantConsent}
+          />
+        )}
+
+        {activePortal === 'doctor' && (
+          <DoctorWorkstation
+            hospitals={hospitals}
+            currentCard={currentCard}
+            onPatientLoaded={handlePatientLoaded}
+            onRefreshTimeline={() => {
+              if (currentCard) refreshPatientData(currentCard.patientId);
+            }}
+          />
+        )}
+
+        {activePortal === 'fhir' && (
+          <FhirViewer currentCard={currentCard} />
+        )}
+
+        {activePortal === 'audit' && (
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">National Healthcare Tamper-Evident Audit Ledger</h3>
+              <p className="text-xs text-slate-500">Every cross-hospital query, clinical record entry, and break-glass exception recorded across the country.</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                  <tr>
+                    <th className="p-3">Timestamp</th>
+                    <th className="p-3">Actor / Role</th>
+                    <th className="p-3">Healthcare Facility</th>
+                    <th className="p-3">Action Type</th>
+                    <th className="p-3">Clinical Justification</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {audits.map((a) => (
+                    <tr key={a.id}>
+                      <td className="p-3 font-mono text-slate-500">{new Date(a.accessedAt).toLocaleString()}</td>
+                      <td className="p-3 font-semibold text-slate-800">{a.actorName} ({a.actorType})</td>
+                      <td className="p-3 text-slate-700">{a.hospital ? a.hospital.name : 'DGHS Master Index'}</td>
+                      <td className="p-3">
+                        <span className="font-mono bg-slate-100 text-slate-800 px-2 py-0.5 rounded text-[11px] font-semibold">
+                          {a.action}
+                        </span>
+                      </td>
+                      <td className="p-3 text-slate-600">{a.justification}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Modal for Registering a Patient */}
+      <RegisterPatientModal
+        isOpen={showRegisterModal}
+        onClose={() => setShowRegisterModal(false)}
+        onRegistered={(newCard) => {
+          handlePatientLoaded(newCard);
+          setActivePortal('patient');
+        }}
+      />
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-4">
+          <p>© 2026 Directorate General of Health Services (DGHS) — National Digital Health Card System.</p>
+          <div className="flex items-center gap-4 text-[11px]">
+            <a href="/swagger-ui.html" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+              Swagger OpenAPI Documentation
+            </a>
+            <span>•</span>
+            <a href="/h2-console" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">
+              H2 Database Console
+            </a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
