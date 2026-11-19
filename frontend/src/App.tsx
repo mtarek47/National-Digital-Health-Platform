@@ -144,76 +144,76 @@ export const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Demo Scenario Explainer Banner */}
-      <section className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-emerald-100 py-3 px-4 border-b border-emerald-800">
+      {/* Sleek Context Sub-bar */}
+      <section className="bg-slate-900/90 text-slate-300 py-2.5 px-4 border-b border-slate-800">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 font-medium">
-            <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>
-              <strong>Centralized IOM EHR Architecture:</strong> All 8 Pillars Centralized — Discrete Clinical Data ➜ 1.5T Brain MRI (PACS) ➜ CPOE Orders ➜ CDSS Duplicate Test Prevention ➜ HL7 FHIR Interoperability!
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="text-slate-300">
+              <strong className="text-emerald-300 font-semibold">National EHR Network:</strong> Longitudinal records synced across <span className="text-white font-medium">DMCH (Hospital A)</span> and <span className="text-white font-medium">CMCH (Hospital B)</span> via HL7 FHIR R4 & IOM Core Architecture.
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-slate-300">Active Patient:</span>
-            <span className="font-bold text-white bg-white/10 px-2 py-0.5 rounded font-mono">
-              {currentCard?.fullName || 'Loading...'} ({currentCard?.healthId})
+          <div className="flex items-center gap-3">
+            <span className="text-slate-400">Current Patient:</span>
+            <span className="font-bold text-white bg-slate-800 border border-slate-700 px-2.5 py-0.5 rounded-md font-mono text-[11px]">
+              {currentCard?.fullName || 'Rahim Uddin'} ({currentCard?.healthId || 'HID-2026-884219'})
             </span>
           </div>
         </div>
       </section>
 
-      {/* Navigation Tabs */}
-      <nav className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 overflow-x-auto">
+      {/* Navigation Tabs - Modern Pill Style */}
+      <nav className="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-2 overflow-x-auto py-2">
           <button
             onClick={() => setActivePortal('ehr-hub')}
-            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            className={`py-2 px-3.5 rounded-xl font-bold text-xs transition flex items-center gap-2 whitespace-nowrap ${
               activePortal === 'ehr-hub'
-                ? 'border-emerald-600 text-emerald-700 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Network className="w-4 h-4 text-emerald-600" /> Comprehensive EHR (IOM Core Anatomy)
+            <Network className="w-3.5 h-3.5" /> Comprehensive EHR Cockpit
           </button>
           <button
             onClick={() => setActivePortal('patient')}
-            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            className={`py-2 px-3.5 rounded-xl font-semibold text-xs transition flex items-center gap-2 whitespace-nowrap ${
               activePortal === 'patient'
-                ? 'border-emerald-600 text-emerald-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <ShieldCheck className="w-4 h-4" /> Patient Portal & Health Card
+            <ShieldCheck className="w-3.5 h-3.5" /> Patient Health Card
           </button>
           <button
             onClick={() => setActivePortal('doctor')}
-            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            className={`py-2 px-3.5 rounded-xl font-semibold text-xs transition flex items-center gap-2 whitespace-nowrap ${
               activePortal === 'doctor'
-                ? 'border-emerald-600 text-emerald-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Stethoscope className="w-4 h-4" /> Doctor CPOE & CDSS Workstation
+            <Stethoscope className="w-3.5 h-3.5" /> Doctor CPOE & CDSS
           </button>
           <button
             onClick={() => setActivePortal('fhir')}
-            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            className={`py-2 px-3.5 rounded-xl font-semibold text-xs transition flex items-center gap-2 whitespace-nowrap ${
               activePortal === 'fhir'
-                ? 'border-emerald-600 text-emerald-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <FileCode2 className="w-4 h-4" /> HL7 FHIR R4 Inspector
+            <FileCode2 className="w-3.5 h-3.5" /> HL7 FHIR R4 Inspector
           </button>
           <button
             onClick={() => setActivePortal('audit')}
-            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            className={`py-2 px-3.5 rounded-xl font-semibold text-xs transition flex items-center gap-2 whitespace-nowrap ${
               activePortal === 'audit'
-                ? 'border-emerald-600 text-emerald-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <History className="w-4 h-4" /> Central Audit Ledger
+            <History className="w-3.5 h-3.5" /> Central Audit Ledger
           </button>
         </div>
       </nav>
