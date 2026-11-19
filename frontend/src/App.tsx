@@ -10,6 +10,7 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Bell,
   CheckCircle2,
   Copy,
@@ -17,7 +18,16 @@ import {
   Building2,
   HeartPulse,
   ExternalLink,
-  X
+  X,
+  LayoutGrid,
+  FlaskConical,
+  BellRing,
+  ClipboardList,
+  Activity,
+  Share2,
+  HeartHandshake,
+  CreditCard,
+  LineChart
 } from 'lucide-react';
 import { api } from './api';
 import type { DigitalHealthCard, MedicalTimelineItem, Hospital, ConsentRecord, AccessLog } from './types';
@@ -45,6 +55,11 @@ export const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
+
+  // Submenu state for Comprehensive EHR Hub
+  const [isEhrSubmenuOpen, setIsEhrSubmenuOpen] = useState(true);
+  const [selectedEhrPillarId, setSelectedEhrPillarId] = useState<number>(2); // Default to Pillar 2 (Result Management / MRI)
+  const [ehrViewMode, setEhrViewMode] = useState<'cockpit' | 'diagram'>('cockpit');
 
   // Initial load
   const loadInitialData = async () => {
@@ -121,18 +136,102 @@ export const App: React.FC = () => {
     }
   };
 
-  // Nav item metadata
-  const navItems = [
+  // 8 Core Pillars & Architecture Overview under Comprehensive EHR Hub
+  const ehrSubmenuItems = [
     {
-      id: 'ehr-hub' as PortalType,
-      label: 'Comprehensive EHR Hub',
-      shortLabel: 'EHR Hub',
-      group: 'Clinical Cockpit',
-      desc: 'IOM 8-Pillar Architecture',
-      icon: Network,
-      badge: 'IOM Core',
-      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+      id: 'ehr-overview',
+      label: 'Architecture Blueprint',
+      subLabel: 'Central IOM Hub & 8 Pillars',
+      pillarId: 0,
+      isOverview: true,
+      icon: LayoutGrid,
+      badge: 'IOM Map',
+      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
     },
+    {
+      id: 'pillar-2',
+      label: 'Result Management',
+      subLabel: '1.5T Brain MRI & Labs',
+      pillarId: 2,
+      isOverview: false,
+      icon: FlaskConical,
+      badge: '1.5T PACS',
+      badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+    },
+    {
+      id: 'pillar-4',
+      label: 'Decision Support',
+      subLabel: 'CDSS Alerts & Safety',
+      pillarId: 4,
+      isOverview: false,
+      icon: BellRing,
+      badge: '3 Alerts',
+      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+    },
+    {
+      id: 'pillar-3',
+      label: 'Order Management',
+      subLabel: 'CPOE Physician Order Entry',
+      pillarId: 3,
+      isOverview: false,
+      icon: ClipboardList,
+      badge: 'Signed',
+      badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+    },
+    {
+      id: 'pillar-1',
+      label: 'Health Information & Data',
+      subLabel: 'Computable Vitals & ICD-10',
+      pillarId: 1,
+      isOverview: false,
+      icon: Activity,
+      badge: 'Synced',
+      badgeColor: 'bg-teal-500/20 text-teal-300 border-teal-500/30'
+    },
+    {
+      id: 'pillar-5',
+      label: 'Electronic Communication',
+      subLabel: 'Inter-Hospital HIE & FHIR',
+      pillarId: 5,
+      isOverview: false,
+      icon: Share2,
+      badge: 'HIE Live',
+      badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+    },
+    {
+      id: 'pillar-6',
+      label: 'Patient Support',
+      subLabel: 'Telemonitoring & Home Care',
+      pillarId: 6,
+      isOverview: false,
+      icon: HeartHandshake,
+      badge: 'Tracked',
+      badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+    },
+    {
+      id: 'pillar-7',
+      label: 'Administrative Processes',
+      subLabel: 'Eligibility & Claims Savings',
+      pillarId: 7,
+      isOverview: false,
+      icon: CreditCard,
+      badge: 'Eligible',
+      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+    },
+    {
+      id: 'pillar-8',
+      label: 'Population Health & Radar',
+      subLabel: 'Biosurveillance & Quality KPIs',
+      pillarId: 8,
+      isOverview: false,
+      icon: LineChart,
+      badge: 'DGHS Radar',
+      badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+    }
+  ];
+
+  // Primary navigation items
+  const primaryNavItems = [
     {
       id: 'doctor' as PortalType,
       label: 'Doctor CPOE & CDSS',
@@ -175,7 +274,7 @@ export const App: React.FC = () => {
     },
   ];
 
-  const currentNav = navItems.find(n => n.id === activePortal) || navItems[0];
+  const activePillarObj = ehrSubmenuItems.find(p => !p.isOverview && p.pillarId === selectedEhrPillarId);
 
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-900 flex overflow-hidden font-sans">
@@ -188,12 +287,12 @@ export const App: React.FC = () => {
       )}
 
       {/* ==================================================================== */}
-      {/* ENTERPRISE SIDEBAR DRAWER                                             */}
+      {/* ENTERPRISE SIDEBAR DRAWER WITH ACCORDION SUBMENUS                   */}
       {/* ==================================================================== */}
       <aside 
         className={`
           fixed lg:static top-0 bottom-0 left-0 z-50
-          ${isSidebarOpen ? 'w-72' : 'w-20'}
+          ${isSidebarOpen ? 'w-80' : 'w-20'}
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           bg-slate-900 text-slate-200 border-r border-slate-800
           flex flex-col transition-all duration-300 ease-in-out shrink-0
@@ -201,7 +300,7 @@ export const App: React.FC = () => {
         `}
       >
         {/* Brand Header */}
-        <div className="h-16 border-b border-slate-800/80 px-4 flex items-center justify-between gap-3 bg-slate-950/40">
+        <div className="h-16 border-b border-slate-800/80 px-4 flex items-center justify-between gap-3 bg-slate-950/50">
           <div className="flex items-center gap-3 overflow-hidden">
             {/* DGHS / BD Gov Emblem Badge */}
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 p-0.5 shadow-md shrink-0 flex items-center justify-center border border-emerald-500/40">
@@ -246,17 +345,127 @@ export const App: React.FC = () => {
           </button>
         </div>
 
-        {/* Navigation Section */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-800">
-          {/* Main Navigation Group */}
+        {/* Navigation Section with Scrollable Tree */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5 scrollbar-thin scrollbar-thumb-slate-800">
+          
+          {/* ================================================================= */}
+          {/* GROUP 1: CLINICAL COCKPIT & EHR HUB ACCORDION                     */}
+          {/* ================================================================= */}
           <div>
             {isSidebarOpen && (
-              <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Clinical Cockpit
+              <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <span>Clinical Cockpit</span>
+                <span className="text-[9px] font-mono text-emerald-400 font-semibold">IOM 8-PILLARS</span>
               </div>
             )}
+            
             <div className="space-y-1">
-              {navItems.slice(0, 3).map((item) => {
+              {/* Comprehensive EHR Hub Parent Item */}
+              <div>
+                <button
+                  onClick={() => {
+                    setActivePortal('ehr-hub');
+                    if (isSidebarOpen) {
+                      setIsEhrSubmenuOpen(prev => activePortal === 'ehr-hub' ? !prev : true);
+                    } else {
+                      setIsSidebarOpen(true);
+                      setIsEhrSubmenuOpen(true);
+                    }
+                  }}
+                  title={!isSidebarOpen ? "Comprehensive EHR Hub (8 Pillars)" : undefined}
+                  className={`
+                    w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs transition group relative
+                    ${activePortal === 'ehr-hub' 
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/40 font-semibold' 
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/80'}
+                  `}
+                >
+                  <Network className={`w-4 h-4 shrink-0 transition ${activePortal === 'ehr-hub' ? 'text-white' : 'text-slate-400 group-hover:text-emerald-400'}`} />
+                  
+                  {isSidebarOpen && (
+                    <div className="flex-1 text-left min-w-0 flex items-center justify-between gap-1.5">
+                      <div className="truncate">
+                        <div className="truncate font-bold">Comprehensive EHR Hub</div>
+                        <div className={`text-[10px] truncate ${activePortal === 'ehr-hub' ? 'text-emerald-100' : 'text-slate-400'}`}>
+                          Central IOM Architecture
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${
+                          activePortal === 'ehr-hub'
+                            ? 'bg-emerald-700/90 text-white border-emerald-500'
+                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                        }`}>
+                          8 Pillars
+                        </span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                          isEhrSubmenuOpen ? 'rotate-180 text-emerald-200' : 'text-slate-400'
+                        }`} />
+                      </div>
+                    </div>
+                  )}
+
+                  {!isSidebarOpen && activePortal === 'ehr-hub' && (
+                    <span className="absolute left-0 top-2 bottom-2 w-1 bg-emerald-400 rounded-r-md" />
+                  )}
+                </button>
+
+                {/* Nested Submenu: 8 Core Pillars + Architecture Overview */}
+                {isSidebarOpen && isEhrSubmenuOpen && (
+                  <div className="pl-3.5 ml-4 mt-1.5 mb-2 border-l-2 border-emerald-500/40 space-y-1 transition-all">
+                    {ehrSubmenuItems.map((sub) => {
+                      const SubIcon = sub.icon;
+                      const isSubActive = 
+                        activePortal === 'ehr-hub' && 
+                        (sub.isOverview ? ehrViewMode === 'diagram' : (ehrViewMode === 'cockpit' && selectedEhrPillarId === sub.pillarId));
+
+                      return (
+                        <button
+                          key={sub.id}
+                          onClick={() => {
+                            setActivePortal('ehr-hub');
+                            if (sub.isOverview) {
+                              setEhrViewMode('diagram');
+                            } else {
+                              setEhrViewMode('cockpit');
+                              setSelectedEhrPillarId(sub.pillarId);
+                            }
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className={`
+                            w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-[11px] transition text-left group
+                            ${isSubActive 
+                              ? 'bg-emerald-700/80 text-white font-bold shadow-xs border border-emerald-500/50' 
+                              : 'text-slate-400 hover:text-white hover:bg-slate-800/70'}
+                          `}
+                        >
+                          <div className="flex items-center gap-2 min-w-0 truncate">
+                            <SubIcon className={`w-3.5 h-3.5 shrink-0 ${isSubActive ? 'text-white' : 'text-slate-400 group-hover:text-emerald-400'}`} />
+                            <div className="truncate">
+                              <span className="truncate block leading-tight">{sub.label}</span>
+                              <span className={`text-[9px] truncate block ${isSubActive ? 'text-emerald-200' : 'text-slate-500'}`}>
+                                {sub.subLabel}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border shrink-0 ${
+                            isSubActive 
+                              ? 'bg-emerald-900/90 text-emerald-200 border-emerald-400' 
+                              : 'bg-slate-800/80 text-slate-400 border-slate-700'
+                          }`}>
+                            {sub.badge}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Other Clinical Cockpit Items */}
+              {primaryNavItems.slice(0, 2).map((item) => {
                 const IconComponent = item.icon;
                 const isActive = activePortal === item.id;
                 return (
@@ -292,7 +501,6 @@ export const App: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Active left indicator pill for collapsed state */}
                     {!isSidebarOpen && isActive && (
                       <span className="absolute left-0 top-2 bottom-2 w-1 bg-emerald-400 rounded-r-md" />
                     )}
@@ -302,7 +510,9 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Interoperability & Compliance Group */}
+          {/* ================================================================= */}
+          {/* GROUP 2: INTEROPERABILITY & COMPLIANCE                            */}
+          {/* ================================================================= */}
           <div>
             {isSidebarOpen && (
               <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
@@ -310,7 +520,7 @@ export const App: React.FC = () => {
               </div>
             )}
             <div className="space-y-1">
-              {navItems.slice(3, 5).map((item) => {
+              {primaryNavItems.slice(2, 4).map((item) => {
                 const IconComponent = item.icon;
                 const isActive = activePortal === item.id;
                 return (
@@ -355,7 +565,9 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Launch Clinical Tools */}
+          {/* ================================================================= */}
+          {/* GROUP 3: RAPID CLINICAL ACTIONS                                   */}
+          {/* ================================================================= */}
           <div>
             {isSidebarOpen && (
               <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
@@ -405,10 +617,10 @@ export const App: React.FC = () => {
         </div>
 
         {/* Sidebar Footer: Active Patient Snapshot & Server Status */}
-        <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 space-y-3">
+        <div className="p-3 border-t border-slate-800/80 bg-slate-950/70 space-y-3">
           {/* Active Patient Widget */}
           {isSidebarOpen ? (
-            <div className="bg-slate-850/80 rounded-xl p-2.5 border border-slate-700/70 bg-slate-800/50">
+            <div className="rounded-xl p-2.5 border border-slate-700/70 bg-slate-800/60 shadow-xs">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active Subject
@@ -428,7 +640,7 @@ export const App: React.FC = () => {
                 </div>
                 <button
                   onClick={copyHealthId}
-                  className="p-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
+                  className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition"
                   title="Copy Health ID"
                 >
                   {copiedId ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
@@ -491,16 +703,29 @@ export const App: React.FC = () => {
               </button>
             )}
 
-            {/* Breadcrumb Navigation */}
-            <div className="flex items-center gap-2 text-xs">
+            {/* Dynamic Breadcrumb Navigation */}
+            <div className="flex items-center gap-2 text-xs truncate">
               <span className="font-semibold text-slate-500 hidden sm:inline">DGHS Ecosystem</span>
               <span className="text-slate-300 hidden sm:inline">/</span>
-              <span className="font-medium text-slate-600 hidden md:inline">{currentNav.group}</span>
+              <span className="font-medium text-slate-600 hidden md:inline">Clinical Cockpit</span>
               <span className="text-slate-300 hidden md:inline">/</span>
-              <span className="font-bold text-slate-900 flex items-center gap-1.5 truncate">
-                <currentNav.icon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                {currentNav.label}
-              </span>
+              
+              {activePortal === 'ehr-hub' ? (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-bold text-slate-800 flex items-center gap-1.5 shrink-0">
+                    <Network className="w-3.5 h-3.5 text-emerald-600" />
+                    Comprehensive EHR Hub
+                  </span>
+                  <span className="text-slate-300">/</span>
+                  <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md truncate text-[11px]">
+                    {ehrViewMode === 'diagram' ? 'Architecture Blueprint' : (activePillarObj?.label || 'Result Management')}
+                  </span>
+                </div>
+              ) : (
+                <span className="font-bold text-slate-900 flex items-center gap-1.5 truncate">
+                  {primaryNavItems.find(p => p.id === activePortal)?.label}
+                </span>
+              )}
             </div>
           </div>
 
@@ -573,6 +798,13 @@ export const App: React.FC = () => {
                 onOpenMriViewer={() => setShowMriModal(true)}
                 onOpenDoctorPortal={() => setActivePortal('doctor')}
                 onOpenFhirPortal={() => setActivePortal('fhir')}
+                selectedPillarId={selectedEhrPillarId}
+                onSelectPillar={(id) => {
+                  setSelectedEhrPillarId(id);
+                  setEhrViewMode('cockpit');
+                }}
+                viewMode={ehrViewMode}
+                onViewModeChange={(mode) => setEhrViewMode(mode)}
               />
             )}
 

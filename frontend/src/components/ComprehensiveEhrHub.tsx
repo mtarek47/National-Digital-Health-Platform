@@ -39,6 +39,10 @@ interface ComprehensiveEhrHubProps {
   onOpenMriViewer: () => void;
   onOpenDoctorPortal: () => void;
   onOpenFhirPortal: () => void;
+  selectedPillarId?: number;
+  onSelectPillar?: (id: number) => void;
+  viewMode?: 'cockpit' | 'diagram';
+  onViewModeChange?: (mode: 'cockpit' | 'diagram') => void;
 }
 
 export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
@@ -49,11 +53,34 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
   audits,
   onOpenMriViewer,
   onOpenDoctorPortal,
-  onOpenFhirPortal
+  onOpenFhirPortal,
+  selectedPillarId,
+  onSelectPillar,
+  viewMode,
+  onViewModeChange
 }) => {
-  // Default selected pillar is Result Management (Pillar 2) to showcase MRI & Labs immediately
-  const [selectedPillarId, setSelectedPillarId] = useState<number>(2);
-  const [viewMode, setViewMode] = useState<'cockpit' | 'diagram'>('cockpit');
+  // Controlled or internal state for active pillar and view mode
+  const [internalPillarId, setInternalPillarId] = useState<number>(2);
+  const [internalViewMode, setInternalViewMode] = useState<'cockpit' | 'diagram'>('cockpit');
+
+  const activePillarId = selectedPillarId !== undefined ? selectedPillarId : internalPillarId;
+  const activeViewMode = viewMode !== undefined ? viewMode : internalViewMode;
+
+  const handleSelectPillar = (id: number) => {
+    if (onSelectPillar) {
+      onSelectPillar(id);
+    } else {
+      setInternalPillarId(id);
+    }
+  };
+
+  const handleViewModeChange = (mode: 'cockpit' | 'diagram') => {
+    if (onViewModeChange) {
+      onViewModeChange(mode);
+    } else {
+      setInternalViewMode(mode);
+    }
+  };
 
   // Simulated CPOE Orders
   const [cpoeOrders] = useState<CpoeOrder[]>([
@@ -215,7 +242,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
     }
   ];
 
-  const selectedPillar = pillars.find(p => p.id === selectedPillarId) || pillars[0];
+  const selectedPillar = pillars.find(p => p.id === activePillarId) || pillars[0];
 
   return (
     <div className="space-y-6 font-sans">
@@ -323,15 +350,15 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
           {/* Quick Action Tools */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setViewMode(viewMode === 'cockpit' ? 'diagram' : 'cockpit')}
+              onClick={() => handleViewModeChange(activeViewMode === 'cockpit' ? 'diagram' : 'cockpit')}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 ${
-                viewMode === 'diagram' 
+                activeViewMode === 'diagram' 
                   ? 'bg-slate-900 text-white border-slate-800' 
                   : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              <span>{viewMode === 'diagram' ? 'Back to Cockpit' : 'Architecture Blueprint'}</span>
+              <span>{activeViewMode === 'diagram' ? 'Back to Cockpit' : 'Architecture Blueprint'}</span>
             </button>
 
             <button
@@ -344,7 +371,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
         </div>
 
         {/* 3. COCKPIT MODE: LEFT 8-PILLAR NAV RAIL + RIGHT MAIN STAGE */}
-        {viewMode === 'cockpit' ? (
+        {activeViewMode === 'cockpit' ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[580px]">
             
             {/* LEFT NAV RAIL: 8 IOM Core Pillars */}
@@ -360,12 +387,12 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
 
               {pillars.map((pillar) => {
                 const Icon = pillar.icon;
-                const isSelected = selectedPillarId === pillar.id;
+                const isSelected = activePillarId === pillar.id;
 
                 return (
                   <button
                     key={pillar.id}
-                    onClick={() => setSelectedPillarId(pillar.id)}
+                    onClick={() => handleSelectPillar(pillar.id)}
                     className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between group ${
                       isSelected
                         ? 'bg-white text-slate-900 border-2 border-emerald-600 shadow-sm'
@@ -824,7 +851,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
                 {[pillars[0], pillars[7], pillars[6], pillars[5]].map((p) => (
                   <div 
                     key={p.id}
-                    onClick={() => { setSelectedPillarId(p.id); setViewMode('cockpit'); }}
+                    onClick={() => { handleSelectPillar(p.id); handleViewModeChange('cockpit'); }}
                     className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white hover:border-emerald-500 cursor-pointer transition shadow-xs"
                   >
                     <div className="flex justify-between items-center">
@@ -854,7 +881,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
                 {[pillars[1], pillars[2], pillars[3], pillars[4]].map((p) => (
                   <div 
                     key={p.id}
-                    onClick={() => { setSelectedPillarId(p.id); setViewMode('cockpit'); }}
+                    onClick={() => { handleSelectPillar(p.id); handleViewModeChange('cockpit'); }}
                     className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white hover:border-emerald-500 cursor-pointer transition shadow-xs"
                   >
                     <div className="flex justify-between items-center">
