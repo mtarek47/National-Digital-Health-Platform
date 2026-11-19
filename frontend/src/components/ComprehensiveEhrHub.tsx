@@ -12,6 +12,7 @@ import {
   Scan, 
   AlertTriangle, 
   ChevronRight, 
+  ChevronLeft,
   CheckCircle2, 
   FileCode2,
   Building2,
@@ -370,91 +371,63 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
           </div>
         </div>
 
-        {/* 3. COCKPIT MODE: LEFT 8-PILLAR NAV RAIL + RIGHT MAIN STAGE */}
+        {/* 3. FULL-WIDTH CLINICAL WORKSPACE (Navigated via Left Sidebar Drawer) */}
         {activeViewMode === 'cockpit' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[580px]">
-            
-            {/* LEFT NAV RAIL: 8 IOM Core Pillars */}
-            <div className="lg:col-span-4 border-r border-slate-200 bg-slate-50/40 p-3 sm:p-4 space-y-1.5">
-              <div className="px-2 py-1 mb-2 flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  IOM Core EHR Pillars (8)
-                </span>
-                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded font-semibold">
-                  100% Centralized
-                </span>
-              </div>
-
-              {pillars.map((pillar) => {
-                const Icon = pillar.icon;
-                const isSelected = activePillarId === pillar.id;
-
-                return (
-                  <button
-                    key={pillar.id}
-                    onClick={() => handleSelectPillar(pillar.id)}
-                    className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between group ${
-                      isSelected
-                        ? 'bg-white text-slate-900 border-2 border-emerald-600 shadow-sm'
-                        : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        isSelected ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-200/80 text-slate-600 group-hover:bg-slate-300'
-                      }`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="truncate">
-                        <div className="text-xs font-bold truncate flex items-center gap-1.5">
-                          <span>{pillar.title}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                          {pillar.subtitle}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 flex items-center gap-1 pl-2">
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${pillar.badgeColor}`}>
-                        {pillar.status}
-                      </span>
-                      <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${isSelected ? 'translate-x-0.5 text-emerald-600' : ''}`} />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* RIGHT MAIN STAGE: Live Interactive Workspace for Selected Pillar */}
-            <div className="lg:col-span-8 p-5 sm:p-7 flex flex-col justify-between space-y-6">
-              
-              <div>
-                {/* Pillar Header Badge & Title */}
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 text-emerald-400 flex items-center justify-center font-bold text-sm shadow-xs">
-                      {selectedPillar.id}
-                    </div>
-                    <div>
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900">
+          <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6 w-full min-h-[580px]">
+            <div>
+              {/* Clean Pillar Header & Fast Pager */}
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-6">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-slate-900 text-emerald-400 flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+                    {selectedPillar.id}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2.5">
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-900">
                         {selectedPillar.title}
                       </h3>
-                      <p className="text-xs text-slate-500">
-                        {selectedPillar.subtitle}
-                      </p>
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${selectedPillar.badgeColor}`}>
+                        {selectedPillar.status}
+                      </span>
                     </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {selectedPillar.subtitle}
+                    </p>
                   </div>
-
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${selectedPillar.badgeColor}`}>
-                    {selectedPillar.tag}
-                  </span>
                 </div>
 
-                {/* PILLAR CONTENT PANELS */}
+                <div className="flex items-center gap-3">
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full border ${selectedPillar.badgeColor}`}>
+                    {selectedPillar.tag}
+                  </span>
+
+                  {/* Fast Pillar Pager */}
+                  <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl p-1">
+                    <button
+                      onClick={() => handleSelectPillar(selectedPillar.id > 1 ? selectedPillar.id - 1 : 8)}
+                      className="p-1 rounded-lg hover:bg-white text-slate-500 hover:text-slate-800 transition"
+                      title="Previous IOM Pillar"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-[11px] font-semibold text-slate-600 px-2 font-mono">
+                      Pillar {selectedPillar.id} of 8
+                    </span>
+                    <button
+                      onClick={() => handleSelectPillar(selectedPillar.id < 8 ? selectedPillar.id + 1 : 1)}
+                      className="p-1 rounded-lg hover:bg-white text-slate-500 hover:text-slate-800 transition"
+                      title="Next IOM Pillar"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* PILLAR CONTENT PANELS */}
                 
                 {/* Pillar 1: Health Information & Data */}
-                {selectedPillarId === 1 && (
+                {activePillarId === 1 && (
                   <div className="space-y-4 text-xs animate-fadeIn">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       
@@ -519,7 +492,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
                 )}
 
                 {/* Pillar 2: Result Management (1.5T MRI PACS & Labs) */}
-                {selectedPillarId === 2 && (
+                {activePillarId === 2 && (
                   <div className="space-y-4 text-xs animate-fadeIn">
                     
                     {/* Primary Highlight: 1.5T MRI Study Card */}
@@ -581,7 +554,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
                 )}
 
                 {/* Pillar 3: Order Management (CPOE) */}
-                {selectedPillarId === 3 && (
+                {activePillarId === 3 && (
                   <div className="space-y-4 text-xs animate-fadeIn">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Computerized Physician Order Entry (CPOE)</span>
@@ -636,7 +609,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
                 )}
 
                 {/* Pillar 4: Decision Support (CDSS) */}
-                {selectedPillarId === 4 && (
+                {activePillarId === 4 && (
                   <div className="space-y-3 text-xs animate-fadeIn">
                     <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px] block">
                       Active Clinical Decision Support Alerts
@@ -673,7 +646,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
                 )}
 
                 {/* Pillar 5: Electronic Communication & HIE */}
-                {selectedPillarId === 5 && (
+                {activePillarId === 5 && (
                   <div className="space-y-4 text-xs animate-fadeIn">
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                       <h4 className="font-bold text-slate-900 text-xs">National Health Information Exchange (HIE) Topology</h4>
@@ -712,7 +685,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
                 )}
 
                 {/* Pillar 6: Patient Support */}
-                {selectedPillarId === 6 && (
+                {activePillarId === 6 && (
                   <div className="space-y-4 text-xs animate-fadeIn">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
@@ -751,7 +724,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
                 )}
 
                 {/* Pillar 7: Administrative Processes */}
-                {selectedPillarId === 7 && (
+                {activePillarId === 7 && (
                   <div className="space-y-4 text-xs animate-fadeIn">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
@@ -791,7 +764,7 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
                 )}
 
                 {/* Pillar 8: Reporting & Population Health */}
-                {selectedPillarId === 8 && (
+                {activePillarId === 8 && (
                   <div className="space-y-4 text-xs animate-fadeIn">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-1">
@@ -830,9 +803,6 @@ export const ComprehensiveEhrHub: React.FC<ComprehensiveEhrHubProps> = ({
                   </button>
                 </div>
               </div>
-
-            </div>
-
           </div>
         ) : (
           /* 4. ARCHITECTURE BLUEPRINT DIAGRAM VIEW (When user clicks 'Architecture Blueprint') */
