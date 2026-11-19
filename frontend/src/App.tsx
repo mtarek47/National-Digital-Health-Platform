@@ -5,7 +5,9 @@ import {
   FileCode2, 
   History, 
   UserPlus, 
-  Sparkles 
+  Sparkles,
+  Network,
+  Scan 
 } from 'lucide-react';
 import { api } from './api';
 import type { DigitalHealthCard, MedicalTimelineItem, Hospital, ConsentRecord, AccessLog } from './types';
@@ -13,9 +15,11 @@ import { HealthCardView } from './components/HealthCardView';
 import { DoctorWorkstation } from './components/DoctorWorkstation';
 import { FhirViewer } from './components/FhirViewer';
 import { RegisterPatientModal } from './components/RegisterPatientModal';
+import { ComprehensiveEhrHub } from './components/ComprehensiveEhrHub';
+import { MriStudyViewer } from './components/MriStudyViewer';
 
 export const App: React.FC = () => {
-  const [activePortal, setActivePortal] = useState<'patient' | 'doctor' | 'fhir' | 'audit'>('patient');
+  const [activePortal, setActivePortal] = useState<'ehr-hub' | 'patient' | 'doctor' | 'fhir' | 'audit'>('ehr-hub');
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [currentCard, setCurrentCard] = useState<DigitalHealthCard | null>(null);
   const [timeline, setTimeline] = useState<MedicalTimelineItem[]>([]);
@@ -23,6 +27,7 @@ export const App: React.FC = () => {
   const [audits, setAudits] = useState<AccessLog[]>([]);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showMriModal, setShowMriModal] = useState(false);
 
   // Initial load
   const loadInitialData = async () => {
@@ -46,16 +51,25 @@ export const App: React.FC = () => {
 
   const refreshPatientData = async (patientId: string) => {
     try {
-      const [tl, cs, au] = await Promise.all([
-        api.getTimeline(patientId),
-        api.getPatientConsents(patientId),
-        api.getPatientAudits(patientId)
-      ]);
+      const tl = await api.getTimeline(patientId).catch(err => {
+        console.error('Failed to load timeline:', err);
+        return [];
+      });
       setTimeline(tl);
+
+      const cs = await api.getPatientConsents(patientId).catch(err => {
+        console.error('Failed to load consents:', err);
+        return [];
+      });
       setConsents(cs);
+
+      const au = await api.getPatientAudits(patientId).catch(err => {
+        console.error('Failed to load audits:', err);
+        return [];
+      });
       setAudits(au);
     } catch (e) {
-      console.error(e);
+      console.error('Unexpected error in refreshPatientData:', e);
     }
   };
 
@@ -105,13 +119,20 @@ export const App: React.FC = () => {
           <div className="flex items-center gap-3">
             {backendOnline ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-700">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Spring Boot 3 Live (Port 8080)
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Spring Boot 3 Live (Port 8081)
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-950 text-red-400 border border-red-700">
                 <span className="w-2 h-2 rounded-full bg-red-500" /> Connecting to Backend...
               </span>
             )}
+
+            <button
+              onClick={() => setShowMriModal(true)}
+              className="hidden md:inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition shadow-xs"
+            >
+              <Scan className="w-3.5 h-3.5" /> 1.5T Brain MRI (PACS)
+            </button>
 
             <button
               onClick={() => setShowRegisterModal(true)}
@@ -129,7 +150,7 @@ export const App: React.FC = () => {
           <div className="flex items-center gap-2 font-medium">
             <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
-              <strong>Hackathon Flow:</strong> Rahim Uddin treated at <em>Hospital A (DMCH)</em> ➜ Visits <em>Hospital B (CMCH)</em> ➜ Doctor B verifies consent & encounters <strong>Duplicate Test Prevention Alert (HbA1c)</strong> ➜ Encounters converted to <strong>HL7 FHIR R4</strong>!
+              <strong>Centralized IOM EHR Architecture:</strong> All 8 Pillars Centralized — Discrete Clinical Data ➜ 1.5T Brain MRI (PACS) ➜ CPOE Orders ➜ CDSS Duplicate Test Prevention ➜ HL7 FHIR Interoperability!
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -143,10 +164,20 @@ export const App: React.FC = () => {
 
       {/* Navigation Tabs */}
       <nav className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 overflow-x-auto">
+          <button
+            onClick={() => setActivePortal('ehr-hub')}
+            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+              activePortal === 'ehr-hub'
+                ? 'border-emerald-600 text-emerald-700 font-bold'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Network className="w-4 h-4 text-emerald-600" /> Comprehensive EHR (IOM Core Anatomy)
+          </button>
           <button
             onClick={() => setActivePortal('patient')}
-            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 ${
+            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
               activePortal === 'patient'
                 ? 'border-emerald-600 text-emerald-700'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -156,17 +187,17 @@ export const App: React.FC = () => {
           </button>
           <button
             onClick={() => setActivePortal('doctor')}
-            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 ${
+            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
               activePortal === 'doctor'
                 ? 'border-emerald-600 text-emerald-700'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Stethoscope className="w-4 h-4" /> Doctor Consultation & Decision Support
+            <Stethoscope className="w-4 h-4" /> Doctor CPOE & CDSS Workstation
           </button>
           <button
             onClick={() => setActivePortal('fhir')}
-            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 ${
+            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
               activePortal === 'fhir'
                 ? 'border-emerald-600 text-emerald-700'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -176,7 +207,7 @@ export const App: React.FC = () => {
           </button>
           <button
             onClick={() => setActivePortal('audit')}
-            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 ${
+            className={`py-3.5 px-4 font-semibold text-xs border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
               activePortal === 'audit'
                 ? 'border-emerald-600 text-emerald-700'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -189,6 +220,19 @@ export const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        {activePortal === 'ehr-hub' && (
+          <ComprehensiveEhrHub
+            card={currentCard}
+            timeline={timeline}
+            hospitals={hospitals}
+            consents={consents}
+            audits={audits}
+            onOpenMriViewer={() => setShowMriModal(true)}
+            onOpenDoctorPortal={() => setActivePortal('doctor')}
+            onOpenFhirPortal={() => setActivePortal('fhir')}
+          />
+        )}
+
         {activePortal === 'patient' && (
           <HealthCardView
             card={currentCard}
@@ -197,6 +241,7 @@ export const App: React.FC = () => {
             audits={audits}
             onOpenRegisterModal={() => setShowRegisterModal(true)}
             onGrantConsent={handleGrantConsent}
+            onOpenMriViewer={() => setShowMriModal(true)}
           />
         )}
 
@@ -208,6 +253,7 @@ export const App: React.FC = () => {
             onRefreshTimeline={() => {
               if (currentCard) refreshPatientData(currentCard.patientId);
             }}
+            onOpenMriViewer={() => setShowMriModal(true)}
           />
         )}
 
@@ -262,6 +308,11 @@ export const App: React.FC = () => {
           setActivePortal('patient');
         }}
       />
+
+      {/* 1.5T MRI PACS Modal */}
+      {showMriModal && (
+        <MriStudyViewer onClose={() => setShowMriModal(false)} />
+      )}
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-xs">

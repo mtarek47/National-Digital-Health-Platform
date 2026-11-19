@@ -25,6 +25,7 @@ interface DoctorWorkstationProps {
   currentCard: DigitalHealthCard | null;
   onPatientLoaded: (card: DigitalHealthCard) => void;
   onRefreshTimeline: () => void;
+  onOpenMriViewer?: () => void;
 }
 
 export const DoctorWorkstation: React.FC<DoctorWorkstationProps> = ({
@@ -32,6 +33,7 @@ export const DoctorWorkstation: React.FC<DoctorWorkstationProps> = ({
   currentCard,
   onPatientLoaded,
   onRefreshTimeline,
+  onOpenMriViewer,
 }) => {
   const [selectedHospitalId, setSelectedHospitalId] = useState<string>('');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -179,7 +181,13 @@ export const DoctorWorkstation: React.FC<DoctorWorkstationProps> = ({
         medications: medications.filter(m => m.medicationName.trim().length > 0),
         diagnosticReports: selectedTestCode && !duplicateAlert ? [{
           testCode: selectedTestCode,
-          testName: selectedTestCode === 'HBA1C' ? 'HbA1c (Glycated Hemoglobin)' : 'Serum Creatinine',
+          testName: selectedTestCode === 'HBA1C' 
+            ? 'HbA1c (Glycated Hemoglobin)' 
+            : selectedTestCode === 'MRI_BRAIN' 
+            ? 'MRI of Brain & Cranium (1.5T with Contrast)' 
+            : selectedTestCode === 'SERUM_CREATININE'
+            ? 'Serum Creatinine & eGFR'
+            : selectedTestCode,
           status: 'ORDERED',
           resultSummary: 'Order sent to laboratory'
         }] : []
@@ -417,12 +425,13 @@ export const DoctorWorkstation: React.FC<DoctorWorkstationProps> = ({
                     onChange={(e) => setSelectedTestCode(e.target.value)}
                     className="flex-1 bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500"
                   >
-                    <option value="">-- Select Lab Test to Order --</option>
-                    <option value="HBA1C">HbA1c (Glycated Hemoglobin)</option>
-                    <option value="SERUM_CREATININE">Serum Creatinine & eGFR</option>
-                    <option value="CBC">Complete Blood Count (CBC)</option>
-                    <option value="LIPID_PROFILE">Lipid Profile</option>
-                    <option value="CHEST_XRAY">Chest X-Ray P/A View</option>
+                    <option value="">-- Select Lab / Radiology Test to Order (CPOE) --</option>
+                    <option value="HBA1C">HbA1c (Glycated Hemoglobin) - Clinical Pathology</option>
+                    <option value="MRI_BRAIN">MRI of Brain & Cranium (1.5T with Contrast) - Radiology</option>
+                    <option value="SERUM_CREATININE">Serum Creatinine & eGFR - Biochemistry</option>
+                    <option value="CBC">Complete Blood Count (CBC with ESR)</option>
+                    <option value="LIPID_PROFILE">Lipid Profile (Cholesterol, Triglycerides)</option>
+                    <option value="CHEST_XRAY">Chest X-Ray P/A View - Digital Imaging</option>
                   </select>
                 </div>
 
@@ -440,12 +449,22 @@ export const DoctorWorkstation: React.FC<DoctorWorkstationProps> = ({
                       <p className="text-xs text-amber-800 leading-relaxed">
                         {duplicateAlert.warningMessage}
                       </p>
-                      <div className="flex items-center gap-2 pt-1 text-[11px] font-semibold text-amber-900">
+                      <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] font-semibold text-amber-900">
+                        {onOpenMriViewer && (selectedTestCode === 'MRI_BRAIN' || duplicateAlert.testCode === 'MRI_BRAIN') && (
+                          <button
+                            type="button"
+                            onClick={onOpenMriViewer}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg font-bold text-xs transition shadow-xs"
+                          >
+                            Open Existing 1.5T MRI (PACS)
+                          </button>
+                        )}
                         <button
+                          type="button"
                           onClick={() => setSelectedTestCode('')}
                           className="underline hover:text-amber-950"
                         >
-                          Cancel Duplicate Order (Save Patient Cost)
+                          Cancel Duplicate Order (Save Patient ৳8,500)
                         </button>
                         <span>•</span>
                         <span className="text-slate-500">Or continue if clinically indicated</span>

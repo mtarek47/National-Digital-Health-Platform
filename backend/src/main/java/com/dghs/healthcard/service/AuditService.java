@@ -48,10 +48,12 @@ public class AuditService {
         accessLogRepository.save(log);
     }
 
+    @Transactional(readOnly = true)
     public List<AccessLog> getLogsForPatient(UUID patientId) {
         return accessLogRepository.findByPatientIdOrderByAccessedAtDesc(patientId);
     }
 
+    @Transactional(readOnly = true)
     public List<AccessLog> getRecentLogs() {
         return accessLogRepository.findTop50ByOrderByAccessedAtDesc();
     }

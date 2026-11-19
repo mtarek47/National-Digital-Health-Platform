@@ -5,10 +5,12 @@ import com.dghs.healthcard.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
 @Service
+@Transactional(readOnly = true)
 public class FhirService {
     private final PatientRepository patientRepository;
     private final HealthIdentifierRepository healthIdentifierRepository;

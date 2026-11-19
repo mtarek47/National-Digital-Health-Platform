@@ -13,7 +13,8 @@ import java.util.UUID;
 
 @Repository
 public interface ConsentRepository extends JpaRepository<ConsentRecord, UUID> {
-    List<ConsentRecord> findByPatientIdOrderByValidFromDesc(UUID patientId);
+    @Query("SELECT c FROM ConsentRecord c WHERE c.patient.id = :patientId ORDER BY c.validFrom DESC")
+    List<ConsentRecord> findByPatientIdOrderByValidFromDesc(@Param("patientId") UUID patientId);
 
     @Query("SELECT c FROM ConsentRecord c WHERE c.patient.id = :patientId " +
            "AND c.status = 'ACTIVE' AND c.validUntil > :now " +

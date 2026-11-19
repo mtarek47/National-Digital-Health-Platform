@@ -20,6 +20,7 @@ interface HealthCardViewProps {
   audits: AccessLog[];
   onOpenRegisterModal: () => void;
   onGrantConsent: (durationHours: number) => void;
+  onOpenMriViewer?: () => void;
 }
 
 export const HealthCardView: React.FC<HealthCardViewProps> = ({
@@ -29,6 +30,7 @@ export const HealthCardView: React.FC<HealthCardViewProps> = ({
   audits,
   onOpenRegisterModal,
   onGrantConsent,
+  onOpenMriViewer,
 }) => {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'card' | 'timeline' | 'consents' | 'audits'>('card');
@@ -336,6 +338,15 @@ export const HealthCardView: React.FC<HealthCardViewProps> = ({
                               </div>
                               <p className="text-slate-600 mt-1 font-medium">{r.resultSummary}</p>
                               {r.clinicalNotes && <p className="text-slate-400 text-[11px] mt-0.5">{r.clinicalNotes}</p>}
+                              {(r.testCode === 'MRI_BRAIN' || r.testName.toLowerCase().includes('mri')) && onOpenMriViewer && (
+                                <button
+                                  type="button"
+                                  onClick={onOpenMriViewer}
+                                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px] rounded-lg transition shadow-xs"
+                                >
+                                  View 1.5T Brain MRI (PACS Viewer)
+                                </button>
+                              )}
                             </div>
                             <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">
                               {r.status || 'FINAL'}

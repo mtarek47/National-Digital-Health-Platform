@@ -106,3 +106,43 @@ export interface AccessLog {
   justification: string;
   accessedAt: string;
 }
+
+export interface MriStudy {
+  accessionNumber: string;
+  modality: 'MR' | 'CT' | 'CR';
+  studyDescription: string;
+  bodyPart: string;
+  fieldStrength: string;
+  contrastUsed: boolean;
+  contrastAgent?: string;
+  totalSlices: number;
+  sliceThickness: string;
+  performingHospital: string;
+  radiologistName: string;
+  impression: string;
+  findings: string[];
+  recommendation: string;
+  dicomUid: string;
+}
+
+export interface CdssAlert {
+  id: string;
+  type: 'DUPLICATE_ORDER' | 'DRUG_INTERACTION' | 'ALLERGY_ALERT' | 'CLINICAL_REMINDER';
+  severity: 'HIGH' | 'MEDIUM' | 'INFO';
+  title: string;
+  message: string;
+  recommendation: string;
+  sourceGuideline?: string;
+}
+
+export interface CpoeOrder {
+  id: string;
+  category: 'MEDICATION' | 'LABORATORY' | 'IMAGING_MRI' | 'PROCEDURE';
+  itemName: string;
+  details: string;
+  urgency: 'ROUTINE' | 'URGENT' | 'STAT';
+  orderedBy: string;
+  status: 'ORDERED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  cdssChecked: boolean;
+  orderedAt: string;
+}

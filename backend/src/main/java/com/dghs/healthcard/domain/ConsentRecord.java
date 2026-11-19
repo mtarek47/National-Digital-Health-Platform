@@ -1,5 +1,7 @@
 package com.dghs.healthcard.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -11,6 +13,7 @@ public class ConsentRecord {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
@@ -82,6 +85,10 @@ public class ConsentRecord {
     public void setId(UUID id) { this.id = id; }
     public Patient getPatient() { return patient; }
     public void setPatient(Patient patient) { this.patient = patient; }
+    
+    @Transient
+    @JsonProperty("patientId")
+    public UUID getPatientId() { return patient != null ? patient.getId() : null; }
     public Hospital getHospital() { return hospital; }
     public void setHospital(Hospital hospital) { this.hospital = hospital; }
     public Doctor getDoctor() { return doctor; }

@@ -5,6 +5,7 @@ import com.dghs.healthcard.dto.DuplicateCheckResponse;
 import com.dghs.healthcard.repository.DiagnosticReportRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional(readOnly = true)
 public class DecisionSupportService {
     private final DiagnosticReportRepository diagnosticReportRepository;
 

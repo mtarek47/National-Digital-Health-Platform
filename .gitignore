@@ -1,0 +1,8 @@
+# IDE files
+.idea/
+.vscode/
+
+# Build and Dependency outputs
+backend/target/
+frontend/node_modules/
+frontend/dist/

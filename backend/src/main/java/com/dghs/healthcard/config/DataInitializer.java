@@ -181,6 +181,17 @@ public class DataInitializer implements CommandLineRunner {
                 .clinicalNotes("Renal parameters within acceptable baseline before metformin therapy")
                 .build());
 
+        diagnosticReportRepository.save(DiagnosticReportRecord.builder()
+                .encounter(encDmch)
+                .testCode("MRI_BRAIN")
+                .testName("MRI of Brain & Cranium (1.5T with Contrast)")
+                .status("FINAL")
+                .issuedDate(LocalDateTime.now().minusDays(5))
+                .resultSummary("Normal cerebral parenchyma. No acute intracranial hemorrhage, mass effect, or territorial infarction. Ventricular size normal for age. PACS Series #MR-2026-9041.")
+                .fileUrl("https://pacs.dmch.gov.bd/studies/mri-brain-2026-9041")
+                .clinicalNotes("Siemens Magnetom 1.5T; T1/T2 FLAIR, DWI and MRA sequences reviewed. Validated in National SHR under IOM Non-Redundant Result Management standards.")
+                .build());
+
         // 6. Log Initial Audit Record
         accessLogRepository.save(AccessLog.builder()
                 .patient(rahim)

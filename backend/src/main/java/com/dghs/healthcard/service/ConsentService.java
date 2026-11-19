@@ -83,6 +83,7 @@ public class ConsentService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public boolean hasActiveConsent(UUID patientId, UUID hospitalId) {
         if (hospitalId == null) return true;
         List<ConsentRecord> activeConsents = consentRepository.findActiveConsentsForHospital(
@@ -127,6 +128,7 @@ public class ConsentService {
         return saved;
     }
 
+    @Transactional(readOnly = true)
     public List<ConsentRecord> getConsentsForPatient(UUID patientId) {
         return consentRepository.findByPatientIdOrderByValidFromDesc(patientId);
     }
